@@ -28,15 +28,4 @@ app.listen(3000, () => {
   console.log("Started on port 3000");
 });
 
-// let newUser = new User({
-//   email: "    someemail@something.com   "
-// });
-
-// newUser.save().then(
-//   doc => {
-//     console.log("Saved todo", doc);
-//   },
-//   e => {
-//     console.log("Unable to save todo");
-//   }
-// );
+module.exports = {app}; // same as app: app
