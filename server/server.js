@@ -2,6 +2,7 @@
 // 3rd party library imports
 const express = require("express");
 const bodyParser = require("body-parser");
+const { ObjectID } = require("mongodb");
 
 // Local imports
 const { mongoose } = require("./db/mongoose.js");
@@ -39,7 +40,26 @@ app.get("/todos", (req, res) => {
 });
 // if we just use res.send(todos), we get an array...
 // but ({todos: todos}) gets us an object...
-//to which we can add other properties later
+// to which we can add other properties later
+
+app.get("/todos/:id", (req, res) => {
+  let id = req.params.id;
+  // Validate data
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+  // Query dbase
+  Todo.findById(id)
+    .then(todo => {
+      if (!todo) {
+        return res.status(404).send();
+      }
+      res.send({ todo });
+    })
+    .catch(e => {
+      res.status(400).send(e);
+    });
+});
 
 app.listen(3000, () => {
   console.log("Started on port 3000");
