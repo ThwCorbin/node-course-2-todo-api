@@ -10,3 +10,4 @@ let User = mongoose.model("User", {
   });
 
   module.exports ={User}; // same as User: User
+  
