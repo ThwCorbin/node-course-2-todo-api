@@ -9,13 +9,13 @@
     "test-watch": "nodemon --exec \"npm test\""
   },
   "engine": {
-    "node": "10.0.0"
+    "node": "10.0.0",
+    "npm": "6.0.0"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.2",
-    "eslint": "^4.19.1",
     "express": "^4.16.3",
     "mongodb": "^3.0.7",
     "mongoose": "^5.0.17"
@@ -24,6 +24,7 @@
     "expect": "^22.4.3",
     "mocha": "^5.1.1",
     "nodemon": "^1.17.4",
-    "supertest": "^3.0.0"
+    "supertest": "^3.0.0",
+    "eslint": "^4.19.1"
   }
 }
