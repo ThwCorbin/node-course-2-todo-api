@@ -14,6 +14,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
+// Create the routes
 app.post("/todos", (req, res) => {
   let todo = new Todo({
     text: req.body.text
@@ -44,8 +45,9 @@ app.get("/todos", (req, res) => {
 // to which we can add other properties later
 
 app.get("/todos/:id", (req, res) => {
+  // Get the id off the request object parameters
   let id = req.params.id;
-  // Validate data
+  // Validate data: 12 bytes and all is right?
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
@@ -60,6 +62,31 @@ app.get("/todos/:id", (req, res) => {
     .catch(e => {
       res.status(400).send(e);
     });
+});
+
+app.delete("/todos/:id", (req, res) => {
+  // get the id
+  let id = req.params.id;
+  // validate the id -> if !valid...
+  if (!ObjectID.isValid(id)) {
+    // ...return and send status 404 with empty body
+    return res.status(404).send();
+  }
+  // if valid, remove todo by id
+  Todo.findByIdAndRemove(id).then(todo => {
+    // if no document by that id, promise returns null
+    if(!todo) {
+      // ...then return and send status 404 with empty body
+      return res.status(404).send();
+    }
+    // if document id true, then removes and returns the document,
+    // ...we send the document back in an object
+        res.send({todo});
+      })
+      .catch(e => {
+        // if error, send res status 400 with empty body
+        res.status(400).send();
+      });
 });
 
 app.listen(port, () => {
