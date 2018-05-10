@@ -17,8 +17,10 @@
   "dependencies": {
     "body-parser": "^1.18.2",
     "express": "^4.16.3",
+    "lodash": "^4.17.10",
     "mongodb": "^3.0.7",
-    "mongoose": "^5.0.17"
+    "mongoose": "^5.0.17",
+    "package-lock.json": "^1.0.0"
   },
   "devDependencies": {
     "expect": "^22.4.3",
