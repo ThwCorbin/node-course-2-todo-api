@@ -1,5 +1,6 @@
 // Use the server.js file to manage our routes
 // 3rd party library imports
+const _ = require("lodash");
 const express = require("express");
 const bodyParser = require("body-parser");
 const { ObjectID } = require("mongodb");
@@ -73,20 +74,54 @@ app.delete("/todos/:id", (req, res) => {
     return res.status(404).send();
   }
   // if valid, remove todo by id
-  Todo.findByIdAndRemove(id).then(todo => {
-    // if no document by that id, promise returns null
-    if(!todo) {
-      // ...then return and send status 404 with empty body
-      return res.status(404).send();
-    }
-    // if document id true, then removes and returns the document,
-    // ...we send the document back in an object
-        res.send({todo});
-      })
-      .catch(e => {
-        // if error, send res status 400 with empty body
-        res.status(400).send();
-      });
+  Todo.findByIdAndRemove(id)
+    .then(todo => {
+      // if no document by that id, promise returns null
+      if (!todo) {
+        // ...then return and send status 404 with empty body
+        return res.status(404).send();
+      }
+      // if document id true, then removes and returns the document,
+      // ...we send the document back in an object
+      res.send({ todo });
+    })
+    .catch(e => {
+      // if error, send res status 400 with empty body
+      res.status(400).send();
+    });
+});
+
+// patch is what we use to update a resource
+app.patch("/todos/:id", (req, res) => {
+  let id = req.params.id;
+  // _.pick() to pull off subset of the properties user passed to us
+  // ...that we allow the users to update
+  let body = _.pick(res.body, ["text", "completed"]);
+
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  // Update the completedAt property off the completed property
+  if (_.isBoolean(body.completed) && body.completed) {
+    body.completedAt = new Date().getTime();
+  } else {
+    body.completed = false;
+    body.completedAt = null; // removes from dbase
+  }
+
+  // Find by id and update
+  Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
+    .then(todo => {
+      if (!todo) {
+        return res.status(404).send();
+      }
+      
+      res.send({ todo });
+    })
+    .catch(e => {
+      res.status(400).send();
+    });
 });
 
 app.listen(port, () => {
