@@ -1,4 +1,7 @@
 // Use the server.js file to manage our routes
+
+require("./config/config.js");
+
 // 3rd party library imports
 const _ = require("lodash");
 const express = require("express");
@@ -6,12 +9,13 @@ const bodyParser = require("body-parser");
 const { ObjectID } = require("mongodb");
 
 // Local imports
+
 const { mongoose } = require("./db/mongoose.js");
 const { Todo } = require("./models/todo.js");
 const { User } = require("./models/user.js");
 
 let app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
