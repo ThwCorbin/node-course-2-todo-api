@@ -94,9 +94,10 @@ app.delete("/todos/:id", (req, res) => {
 // patch is what we use to update a resource
 app.patch("/todos/:id", (req, res) => {
   let id = req.params.id;
-  // _.pick() to pull off subset of the properties user passed to us
-  // ...that we allow the users to update
-  let body = _.pick(res.body, ["text", "completed"]);
+  // use _.pick() to pull a subset of the properties,
+  // which user passed to us on the request object,
+  // and to allow the users to only update those properties
+  let body = _.pick(req.body, ["text", "completed"]);
 
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
@@ -116,7 +117,7 @@ app.patch("/todos/:id", (req, res) => {
       if (!todo) {
         return res.status(404).send();
       }
-      
+
       res.send({ todo });
     })
     .catch(e => {

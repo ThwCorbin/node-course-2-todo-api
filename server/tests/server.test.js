@@ -5,7 +5,7 @@ const { ObjectID } = require("mongodb");
 const { app } = require("./../server.js");
 const { Todo } = require("./../models/todo.js");
 
-// Create dummy/seed todos for testing
+// Create dummy/seed todos for testing routes
 const todos = [
   {
     _id: new ObjectID(),
@@ -13,11 +13,13 @@ const todos = [
   },
   {
     _id: new ObjectID(),
-    text: "Second test todo"
+    text: "Second test todo",
+    completed: true,
+    completedAt: 333
   }
 ];
 
-// This deletes all todoas and then provides seed data (todos) to test
+// This deletes all todoas and then provides seed data (todos) to test routes
 beforeEach(done => {
   Todo.remove({})
     .then(() => {
@@ -30,7 +32,7 @@ beforeEach(done => {
 // results in Error: Timeout of 2000ms exceeded ...
 // until I added Andrew's line below in package.json...
 // mocha --timeout=4000 server/**/*.test.js
-// this may be cause be new version of Expect -- see lecture 104
+// this may because new version of Expect -- see lecture 104
 
 describe("POST /todos", () => {
   it("should create a new todo", done => {
@@ -150,7 +152,7 @@ describe("DELETE /todos/:id", () => {
         // query dbase to verify that _id does not exist === null
         Todo.findById(hexId)
           .then(todo => {
-            expect(todo).toBeNull();
+            expect(todo).toBeFalsy();
             done();
           })
           .catch(e => done(e));
@@ -169,6 +171,46 @@ describe("DELETE /todos/:id", () => {
     request(app)
       .delete("/todos/123abc")
       .expect(404)
+      .end(done);
+  });
+});
+
+describe("PATCH /todos/:id", () => {
+  it("should update the todo", done => {
+    let hexId = todos[0]._id.toHexString();
+    let text = "This is my new test text";
+
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send({
+        completed: true,
+        text: text
+      })
+      .expect(200)
+      .expect(res => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(true);
+        expect(typeof res.body.todo.completedAt).toBe("number");
+      })
+      .end(done);
+  });
+
+  it("should clear completeAt when todo is not completed", done => {
+    let hexId = todos[1]._id.toHexString();
+    let text = "This is my new test text!!";
+
+    request(app)
+      .patch(`/todos/${hexId}`)
+      .send({
+        completed: false,
+        text: text
+      })
+      .expect(200)
+      .expect(res => {
+        expect(res.body.todo.text).toBe(text);
+        expect(res.body.todo.completed).toBe(false);
+        expect(res.body.todo.completedAt).toBeFalsy();
+      })
       .end(done);
   });
 });
