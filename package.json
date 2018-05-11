@@ -20,7 +20,8 @@
     "lodash": "^4.17.10",
     "mongodb": "^3.0.7",
     "mongoose": "^5.0.17",
-    "package-lock.json": "^1.0.0"
+    "package-lock.json": "^1.0.0",
+    "validator": "^10.2.0"
   },
   "devDependencies": {
     "expect": "^22.4.3",
