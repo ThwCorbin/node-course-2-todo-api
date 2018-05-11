@@ -42,7 +42,7 @@ UserSchema.methods.toJSON = function() {
 let user = this;
 // Take mongoose user variable and convert to regular object
 let userObject = user.toObject();
-// Use _.pick() to ensure password and token are not returned
+// Use _.pick() to ensure password and token are not returned with res
 return _.pick(userObject, ["_id", "email"]);
 };
 
