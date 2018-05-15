@@ -39,17 +39,18 @@ let UserSchema = new mongoose.Schema({
 // Override intance methods to user (with small u)
 // Do not use arrow functions, as we need value "this"
 UserSchema.methods.toJSON = function() {
-let user = this;
-// Take mongoose user variable and convert to regular object
-let userObject = user.toObject();
-// Use _.pick() to ensure password and token are not returned with res
-return _.pick(userObject, ["_id", "email"]);
+  let user = this;
+  // Take mongoose user variable and convert to regular object
+  let userObject = user.toObject();
+  // Use _.pick() to ensure password and token are not returned with res
+  return _.pick(userObject, ["_id", "email"]);
 };
 
 // Adding instance methods to user (with small u)
 // Do not use arrow functions, as we need value "this"
 UserSchema.methods.generateAuthToken = function() {
   let user = this;
+  // instance methods get called with the individual doc
   let access = "auth";
   let token = jwt
     .sign({ _id: user._id.toHexString(), access }, "abc123")
@@ -61,6 +62,26 @@ UserSchema.methods.generateAuthToken = function() {
 
   return user.save().then(() => {
     return token;
+  });
+};
+
+UserSchema.statics.findByToken = function(token) {
+  let User = this;
+  // model methods get called with the model as this binding
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, "abc123");
+  } catch (e) {
+    return Promise.reject();
+    // instead of returning a new Promise and then immediately
+    // rejecting it, we can return Promise.reject();
+  }
+
+  return User.findOne({
+    "_id": decoded._id,
+    "tokens.token": token,
+    "tokens.access": "auth"
   });
 };
 
