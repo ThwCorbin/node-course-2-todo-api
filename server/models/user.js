@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("jsonwebtoken");
 const _ = require("lodash");
+const bcrypt = require("bcryptjs");
 
 let UserSchema = new mongoose.Schema({
   email: {
@@ -79,11 +80,29 @@ UserSchema.statics.findByToken = function(token) {
   }
 
   return User.findOne({
-    "_id": decoded._id,
+    _id: decoded._id,
     "tokens.token": token,
     "tokens.access": "auth"
   });
 };
+
+UserSchema.pre("save", function(next) {
+  // See Mongoose middleware for pre and post hooks
+  // .pre runs the function before the "save" to the dbase
+  let user = this;
+  // prevent rehashing a password unless user.password changed
+  if (user.isModified("password")) {
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+          user.password = hash;
+          next(); // "save" the document to the dbase
+        });
+    });
+    // next();
+  } else {
+    next(); // allows "save" of other changes if password not changed
+  }
+});
 
 let User = mongoose.model("User", UserSchema);
 
