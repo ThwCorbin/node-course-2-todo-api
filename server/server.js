@@ -6,7 +6,6 @@ const _ = require("lodash");
 const express = require("express");
 const bodyParser = require("body-parser");
 const { ObjectID } = require("mongodb");
-// const bcrypt = require("bcryptjs");
 
 // Local imports
 const { mongoose } = require("./db/mongoose.js");
@@ -19,10 +18,12 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
-// Create the routes
-app.post("/todos", (req, res) => {
+// CREATE THE ROUTES
+
+app.post("/todos", authenticate, (req, res) => {
   let todo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   });
 
   todo.save().then(
@@ -95,7 +96,7 @@ app.delete("/todos/:id", (req, res) => {
     });
 });
 
-// patch is what we use to update a resource
+// Patch is what we use to update a resource
 app.patch("/todos/:id", (req, res) => {
   let id = req.params.id;
   // use _.pick() to pull a subset of the properties,
@@ -129,7 +130,6 @@ app.patch("/todos/:id", (req, res) => {
     });
 });
 
-// POST /users
 app.post("/users", (req, res) => {
   let body = _.pick(req.body, ["email", "password"]);
   let user = new User(body); // pass in body object
@@ -148,6 +148,7 @@ app.post("/users", (req, res) => {
     });
 });
 
+// Fetch route for currently authenticated user
 app.get("/users/me", authenticate, (req, res) => {
   res.send(req.user);
 });
@@ -167,11 +168,14 @@ app.post("/users/login", (req, res) => {
 });
 
 app.delete("/users/me/token", authenticate, (req, res) => {
-  req.user.removeToken(req.token).then(() => {
-    res.status(200).send();
-  }, () => {
-    res.status(400).send();
-  });
+  req.user.removeToken(req.token).then(
+    () => {
+      res.status(200).send();
+    },
+    () => {
+      res.status(400).send();
+    }
+  );
 });
 
 app.listen(port, () => {

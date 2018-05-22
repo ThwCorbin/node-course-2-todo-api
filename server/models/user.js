@@ -47,11 +47,12 @@ UserSchema.methods.toJSON = function() {
   return _.pick(userObject, ["_id", "email"]);
 };
 
-// Adding instance methods to user (with small u)
-// Do not use arrow functions, as we need value "this"
+// Adding instance methods with .methods to user (with small u)
 UserSchema.methods.generateAuthToken = function() {
+  // Do not use arrow functions, as we need value "this",
   let user = this;
-  // instance methods get called with the individual doc
+  // instance methods get called with the individual
+  // document as the "this" binding
   let access = "auth";
   let token = jwt
     .sign({ _id: user._id.toHexString(), access }, "abc123")
@@ -76,9 +77,11 @@ UserSchema.methods.removeToken = function(token) {
   });
 };
 
+// Adding model methods with .statics to User (with uppercase U)
 UserSchema.statics.findByToken = function(token) {
   let User = this;
-  // model methods get called with the model as this binding
+  // model methods get called with the model
+  // as the "this" binding
   let decoded;
 
   try {
