@@ -130,16 +130,23 @@ app.patch("/todos/:id", (req, res) => {
     });
 });
 
+// POST /users
 app.post("/users", (req, res) => {
   let body = _.pick(req.body, ["email", "password"]);
   let user = new User(body); // pass in body object
 
   user
     .save()
+    // save a new user
     .then(() => {
+      // then generate token using the generateAuthToken method
+      // from User model's UserSchema.methods.generateAuthToken
       return user.generateAuthToken();
     })
     .then(token => {
+      // then send the user the token 
+      // with a custom response header
+      //  using key/value '"x-auth": token' on the res object
       res.header("x-auth", token).send(user);
       // "x- indicates we are using a custom header"
     })
@@ -158,6 +165,9 @@ app.post("/users/login", (req, res) => {
 
   User.findByCredentials(body.email, body.password)
     .then(user => {
+      // Generate and then send the user the key/value
+      // '"x-auth": token' on the res object
+      // with a custom response header
       return user.generateAuthToken().then(token => {
         res.header("x-auth", token).send(user);
       });

@@ -22,7 +22,7 @@ let UserSchema = new mongoose.Schema({
     require: true,
     minlength: 6
   },
-  // MongoDB's token array
+  // MongoDB's tokens array
   tokens: [
     {
       access: {
@@ -37,18 +37,19 @@ let UserSchema = new mongoose.Schema({
   ]
 });
 
-// Override intance methods to user (with small u)
-// Do not use arrow functions, as we need value "this"
+// Instance method (for user) to make JSON
 UserSchema.methods.toJSON = function() {
+  // Do not use arrow function, as we need value "this"
   let user = this;
   // Take mongoose user variable and convert to regular object
   let userObject = user.toObject();
-  // Use _.pick() to ensure password and token are not returned with res
+  // Use _.pick() that only _id and email are returned with res
   return _.pick(userObject, ["_id", "email"]);
 };
 
-// Adding instance methods with .methods to user (with small u)
+// Instance ethod to generate a user token
 UserSchema.methods.generateAuthToken = function() {
+  // Add instance methods with .methods to user (lowercase)
   // Do not use arrow functions, as we need value "this",
   let user = this;
   // instance methods get called with the individual
@@ -60,6 +61,7 @@ UserSchema.methods.generateAuthToken = function() {
   // pass in _id string value instead of the object id
   // jwt.sign() returns an object, which we turn into a string
 
+  // MongoDB's tokens...is overwritten...??
   user.tokens = user.tokens.concat([{ access, token }]);
 
   return user.save().then(() => {
@@ -67,6 +69,7 @@ UserSchema.methods.generateAuthToken = function() {
   });
 };
 
+// Instance method to remove token
 UserSchema.methods.removeToken = function(token) {
   let user = this;
 
@@ -77,8 +80,9 @@ UserSchema.methods.removeToken = function(token) {
   });
 };
 
-// Adding model methods with .statics to User (with uppercase U)
+// Model method to find by token
 UserSchema.statics.findByToken = function(token) {
+  // Add model methods with .statics to User (uppercase)
   let User = this;
   // model methods get called with the model
   // as the "this" binding
@@ -99,6 +103,7 @@ UserSchema.statics.findByToken = function(token) {
   });
 };
 
+// Model method to find by credentials
 UserSchema.statics.findByCredentials = function(email, password) {
   let User = this;
 
@@ -119,9 +124,13 @@ UserSchema.statics.findByCredentials = function(email, password) {
   });
 };
 
+// Prior to save() to the dbase, check if password is
+// new or changed, and if so, hash and salt the password
+// then save password change and other changes to dbase
+// otherwise, just save other changes to the dbase
 UserSchema.pre("save", function(next) {
-  // See Mongoose middleware for pre and post hooks
   // .pre runs the function before the "save" to the dbase
+  // See Mongoose middleware for pre and post hooks
   let user = this;
   // prevent rehashing a password unless user.password changed
   if (user.isModified("password")) {
@@ -131,9 +140,8 @@ UserSchema.pre("save", function(next) {
         next(); // "save" the document to the dbase
       });
     });
-    // next();
   } else {
-    next(); // allows "save" of other changes if password not changed
+    next(); // allows "save" of other non-password changes
   }
 });
 
