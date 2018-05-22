@@ -36,8 +36,11 @@ app.post("/todos", authenticate, (req, res) => {
   );
 });
 
-app.get("/todos", (req, res) => {
-  Todo.find().then(
+app.get("/todos", authenticate, (req, res) => {
+  Todo.find({
+    // only returns todos of user with specific x-auth
+    _creator: req.user._id
+  }).then(
     todos => {
       res.send({ todos });
     },
@@ -50,7 +53,7 @@ app.get("/todos", (req, res) => {
 // but ({todos: todos}) gets us an object...
 // to which we can add other properties later
 
-app.get("/todos/:id", (req, res) => {
+app.get("/todos/:id", authenticate, (req, res) => {
   // Get the id off the request object parameters
   let id = req.params.id;
   // Validate data: 12 bytes and all is right?
@@ -58,7 +61,10 @@ app.get("/todos/:id", (req, res) => {
     return res.status(404).send();
   }
   // Query dbase
-  Todo.findById(id)
+  Todo.findOne({
+    _id: id,
+    _creator: req.user._id
+  })
     .then(todo => {
       if (!todo) {
         return res.status(404).send();
@@ -70,7 +76,7 @@ app.get("/todos/:id", (req, res) => {
     });
 });
 
-app.delete("/todos/:id", (req, res) => {
+app.delete("/todos/:id", authenticate, (req, res) => {
   // get the id
   let id = req.params.id;
   // validate the id -> if !valid...
@@ -79,7 +85,10 @@ app.delete("/todos/:id", (req, res) => {
     return res.status(404).send();
   }
   // if valid, remove todo by id
-  Todo.findByIdAndRemove(id)
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  })
     .then(todo => {
       // if no document by that id, promise returns null
       if (!todo) {
@@ -97,12 +106,12 @@ app.delete("/todos/:id", (req, res) => {
 });
 
 // Patch is what we use to update a resource
-app.patch("/todos/:id", (req, res) => {
+app.patch("/todos/:id", authenticate, (req, res) => {
   let id = req.params.id;
+  let body = _.pick(req.body, ["text", "completed"]);
   // use _.pick() to pull a subset of the properties,
   // which user passed to us on the request object,
   // and to allow the users to only update those properties
-  let body = _.pick(req.body, ["text", "completed"]);
 
   if (!ObjectID.isValid(id)) {
     return res.status(404).send();
@@ -116,8 +125,11 @@ app.patch("/todos/:id", (req, res) => {
     body.completedAt = null; // removes from dbase
   }
 
-  // Find by id and update
-  Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
+  // Find one (by both id and creator) and update
+  Todo.findOneAndUpdate({
+    _id: id,
+    _creator: req.user._id
+  }, { $set: body }, { new: true })
     .then(todo => {
       if (!todo) {
         return res.status(404).send();
@@ -144,7 +156,7 @@ app.post("/users", (req, res) => {
       return user.generateAuthToken();
     })
     .then(token => {
-      // then send the user the token 
+      // then send the user the token
       // with a custom response header
       //  using key/value '"x-auth": token' on the res object
       res.header("x-auth", token).send(user);
