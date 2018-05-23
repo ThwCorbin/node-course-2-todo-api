@@ -56,7 +56,7 @@ UserSchema.methods.generateAuthToken = function() {
   // document as the "this" binding
   let access = "auth";
   let token = jwt
-    .sign({ _id: user._id.toHexString(), access }, "abc123")
+    .sign({ _id: user._id.toHexString(), access }, process.env.JWT_SECRET)
     .toString();
   // pass in _id string value instead of the object id
   // jwt.sign() returns an object, which we turn into a string
@@ -89,7 +89,7 @@ UserSchema.statics.findByToken = function(token) {
   let decoded;
 
   try {
-    decoded = jwt.verify(token, "abc123");
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (e) {
     return Promise.reject();
     // instead of returning a new Promise and then immediately
