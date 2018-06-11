@@ -76,33 +76,32 @@ app.get("/todos/:id", authenticate, (req, res) => {
     });
 });
 
-app.delete("/todos/:id", authenticate, (req, res) => {
+app.delete("/todos/:id", authenticate, async (req, res) => {
   // get the id
-  let id = req.params.id;
+  const id = req.params.id;
   // validate the id -> if !valid...
   if (!ObjectID.isValid(id)) {
     // ...return and send status 404 with empty body
     return res.status(404).send();
   }
   // if valid, remove todo by id
-  Todo.findOneAndRemove({
-    _id: id,
-    _creator: req.user._id
-  })
-    .then(todo => {
-      // if no document by that id, promise returns null
-      if (!todo) {
-        // ...then return and send status 404 with empty body
-        return res.status(404).send();
-      }
-      // if document id true, then removes and returns the document,
-      // ...we send the document back in an object
-      res.send({ todo });
-    })
-    .catch(e => {
-      // if error, send res status 400 with empty body
-      res.status(400).send();
+  try {
+    const todo =  await Todo.findOneAndRemove({
+      _id: id,
+      _creator: req.user._id
     });
+    // if no document by that id, promise returns null
+    if(!todo) {
+      // ...then return and send status 404 with empty body
+      return res.status(404).send();
+    }
+    // if document id true, then removes and returns the document...
+    // ...we send the document back in an object
+    res.send({ todo });
+  } catch(e) {
+    // if error, send res status 400 with empty body
+    res.status(400).send();
+  }
 });
 
 // Patch is what we use to update a resource
@@ -126,10 +125,14 @@ app.patch("/todos/:id", authenticate, (req, res) => {
   }
 
   // Find one (by both id and creator) and update
-  Todo.findOneAndUpdate({
-    _id: id,
-    _creator: req.user._id
-  }, { $set: body }, { new: true })
+  Todo.findOneAndUpdate(
+    {
+      _id: id,
+      _creator: req.user._id
+    },
+    { $set: body },
+    { new: true }
+  )
     .then(todo => {
       if (!todo) {
         return res.status(404).send();
@@ -143,28 +146,24 @@ app.patch("/todos/:id", authenticate, (req, res) => {
 });
 
 // POST /users
-app.post("/users", (req, res) => {
-  let body = _.pick(req.body, ["email", "password"]);
-  let user = new User(body); // pass in body object
+app.post("/users", async (req, res) => {
+  const body = _.pick(req.body, ["email", "password"]);
+  const user = new User(body); // pass in body object
 
-  user
-    .save()
+  try {
     // save a new user
-    .then(() => {
-      // then generate token using the generateAuthToken method
-      // from User model's UserSchema.methods.generateAuthToken
-      return user.generateAuthToken();
-    })
-    .then(token => {
-      // then send the user the token
-      // with a custom response header
-      //  using key/value '"x-auth": token' on the res object
-      res.header("x-auth", token).send(user);
-      // "x- indicates we are using a custom header"
-    })
-    .catch(e => {
-      res.status(400).send(e);
-    });
+    await user.save();
+    // then generate token using the generateAuthToken method
+    // from User model's UserSchema.methods.generateAuthToken
+    const token = await user.generateAuthToken();
+    // await returns token, which we send to the user
+    // with a custom response header
+    //  using key/value '"x-auth": token' on the res object
+    res.header("x-auth", token).send(user);
+    // "x- indicates we are using a custom header"
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 
 // Fetch route for currently authenticated user
@@ -172,32 +171,27 @@ app.get("/users/me", authenticate, (req, res) => {
   res.send(req.user);
 });
 
-app.post("/users/login", (req, res) => {
-  let body = _.pick(req.body, ["email", "password"]);
-
-  User.findByCredentials(body.email, body.password)
-    .then(user => {
-      // Generate and then send the user the key/value
-      // '"x-auth": token' on the res object
-      // with a custom response header
-      return user.generateAuthToken().then(token => {
-        res.header("x-auth", token).send(user);
-      });
-    })
-    .catch(e => {
-      res.status(400).send();
-    });
+app.post("/users/login", async (req, res) => {
+  try {
+    const body = _.pick(req.body, ["email", "password"]);
+    const user = await User.findByCredentials(body.email, body.password);
+    const token = await user.generateAuthToken();
+    // Generate and then send the user the key/value
+    // '"x-auth": token' on the res object
+    // with a custom response header
+    res.header("x-auth", token).send(user);
+  } catch (e) {
+    res.status(400).send();
+  }
 });
 
-app.delete("/users/me/token", authenticate, (req, res) => {
-  req.user.removeToken(req.token).then(
-    () => {
-      res.status(200).send();
-    },
-    () => {
-      res.status(400).send();
-    }
-  );
+app.delete("/users/me/token", authenticate, async (req, res) => {
+  try {
+    await req.user.removeToken(req.token);
+    res.status(200).send();
+  } catch (e) {
+    res.status(400).send();
+  }
 });
 
 app.listen(port, () => {
